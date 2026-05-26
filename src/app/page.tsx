@@ -1,4 +1,6 @@
 import { api, STORE_ID } from "@/lib/api";
+import Header from "./Header";
+import AddToCartButton from "./AddToCartButton";
 
 export const dynamic = "force-dynamic";
 
@@ -43,20 +45,7 @@ export default async function Home({
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto" }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
-        <h1 style={{ margin: 0 }}>Shop</h1>
-        <nav style={{ fontSize: 14, display: "flex", gap: 16 }}>
-          <a href="/login">Sign in</a>
-          <a href="/signup">Create account</a>
-        </nav>
-      </header>
+      <Header />
 
       <form
         method="get"
@@ -105,18 +94,14 @@ export default async function Home({
             }}
           >
             {data.products.map((p) => (
-              <a
+              <div
                 key={p.id}
-                href={p.url ?? "#"}
-                target={p.url ? "_blank" : undefined}
-                rel="noreferrer"
                 style={{
-                  textDecoration: "none",
-                  color: "inherit",
                   border: "1px solid #eee",
                   borderRadius: 6,
                   overflow: "hidden",
-                  display: "block",
+                  display: "flex",
+                  flexDirection: "column",
                 }}
               >
                 <div
@@ -128,7 +113,7 @@ export default async function Home({
                     backgroundPosition: "center",
                   }}
                 />
-                <div style={{ padding: 10 }}>
+                <div style={{ padding: 10, display: "flex", flexDirection: "column", flex: 1 }}>
                   <div
                     style={{
                       fontSize: 14,
@@ -165,8 +150,11 @@ export default async function Home({
                       </>
                     )}
                   </div>
+                  <div style={{ marginTop: "auto" }}>
+                    <AddToCartButton productId={p.id} />
+                  </div>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
 

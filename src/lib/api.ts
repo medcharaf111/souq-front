@@ -43,14 +43,61 @@ export interface Customer {
   phone: string | null;
 }
 
+export interface CartItem {
+  id: string;
+  product_id: string;
+  salla_product_id: string;
+  name: string;
+  image: string | null;
+  url: string | null;
+  sku: string | null;
+  unit_price: number;
+  line_total: number;
+  currency: string;
+  qty: number;
+  stock: number | null;
+  status: string;
+}
+
+export interface Cart {
+  id: string;
+  store_id: string;
+  items: CartItem[];
+  item_count: number;
+  subtotal: number;
+  currency: string;
+}
+
 /** The merchant this deployment is branded for. Set NEXT_PUBLIC_STORE_ID in
  *  the env file per Vercel deployment. */
 export const STORE_ID = process.env.NEXT_PUBLIC_STORE_ID ?? "";
 
+async function getServerCookieHeader(): Promise<string | null> {
+  // typeof window check ensures the next/headers import is tree-shaken from
+  // client bundles.
+  if (typeof window !== "undefined") return null;
+  try {
+    const mod = await import("next/headers");
+    const jar = await mod.cookies();
+    const all = jar.getAll();
+    if (!all.length) return null;
+    return all.map((c) => `${c.name}=${c.value}`).join("; ");
+  } catch {
+    return null;
+  }
+}
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    ...((init?.headers as Record<string, string>) ?? {}),
+  };
+  const serverCookies = await getServerCookieHeader();
+  if (serverCookies) headers["cookie"] = serverCookies;
+
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
-    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    headers,
     credentials: "include",
     cache: "no-store",
   });
@@ -88,4 +135,22 @@ export const api = {
       body: JSON.stringify({ ...data, storeId: STORE_ID }),
     }),
   logout: () => http<{ ok: true }>("/api/auth/logout", { method: "POST" }),
+
+  // Cart
+  getCart: () => http<{ cart: Cart }>("/api/cart"),
+  addToCart: (productId: string, qty = 1) =>
+    http<{ cart: Cart }>("/api/cart/items", {
+      method: "POST",
+      body: JSON.stringify({ product_id: productId, qty }),
+    }),
+  updateCartItem: (itemId: string, qty: number) =>
+    http<{ cart: Cart }>(`/api/cart/items/${encodeURIComponent(itemId)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ qty }),
+    }),
+  removeCartItem: (itemId: string) =>
+    http<{ cart: Cart }>(`/api/cart/items/${encodeURIComponent(itemId)}`, {
+      method: "DELETE",
+    }),
+  emptyCart: () => http<{ cart: Cart }>("/api/cart", { method: "DELETE" }),
 };

@@ -12,6 +12,8 @@ export default function CheckoutForm({
   customerName: string;
   customerPhone: string;
 }) {
+  const [name, setName] = useState(customerName);
+  const [phone, setPhone] = useState(customerPhone);
   const [country, setCountry] = useState("SA");
   const [city, setCity] = useState("");
   const [block, setBlock] = useState("");
@@ -42,9 +44,21 @@ export default function CheckoutForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    // Client-side validation: Salla requires first + last name and a phone.
+    const trimmedName = name.trim();
+    if (!trimmedName.includes(" ")) {
+      setError("Please enter your full name (first and last).");
+      return;
+    }
+    if (!phone.trim()) {
+      setError("Phone number is required.");
+      return;
+    }
     setBusy(true);
     try {
       const r = await api.checkout({
+        name: trimmedName,
+        phone: phone.trim(),
         shipping: {
           country,
           city,
@@ -107,8 +121,15 @@ export default function CheckoutForm({
       <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <h2 style={{ marginTop: 0 }}>Shipping address</h2>
 
-        {field("Name on order", customerName, () => {}, { readOnly: true })}
-        {field("Phone", customerPhone, () => {}, { readOnly: true, type: "tel" })}
+        {field("Full name", name, setName, {
+          required: true,
+          hint: "First and last name — Salla requires both",
+        })}
+        {field("Phone", phone, setPhone, {
+          required: true,
+          type: "tel",
+          hint: "Include country code, e.g. +966500000000",
+        })}
 
         <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: 8 }}>
           {field("Country", country, (v) => setCountry(v.toUpperCase()), {

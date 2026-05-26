@@ -193,6 +193,8 @@ export const api = {
   // Checkout — POSTs cart contents to Salla, returns a hosted-payment URL
   // the customer must be redirected to.
   checkout: (body: {
+    name?: string;
+    phone?: string;
     shipping?: {
       country?: string;
       city?: string;

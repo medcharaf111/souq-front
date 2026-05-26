@@ -187,9 +187,11 @@ export const api = {
     shipping?: {
       country?: string;
       city?: string;
-      street?: string;
       block?: string;
+      street_number?: string;
+      address_line?: string;
       postal_code?: string;
+      geo_coordinates?: { latitude: number; longitude: number };
     };
     courier_id?: number;
   }) =>

@@ -1,4 +1,26 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+/**
+ * Returns the prefix that http() prepends to each path.
+ *
+ * In the browser: relative paths only. Requests go to the frontend's own
+ * origin (e.g. https://souq-front.vercel.app/api/auth/me), where the Next.js
+ * rewrite proxies them to the backend. This makes the backend look same-origin
+ * to the browser, so the session cookie set by the backend is stored on the
+ * frontend domain and automatically sent on every fetch.
+ *
+ * In a Node/server-component context: we still hit the same proxied path, but
+ * fetch() requires an absolute URL, so we construct one against the
+ * deployment's own URL (Vercel injects VERCEL_URL automatically).
+ */
+function getApiBase(): string {
+  if (typeof window !== "undefined") return "";
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) return `https://${vercelUrl}`;
+  // Local dev: server components calling http://localhost:3001/api → rewrite → :3000
+  return `http://localhost:${process.env.PORT ?? "3001"}`;
+}
+
+/** Absolute URL to the backend, used only for full-page navigations (e.g. /install). */
+export const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 export interface ApiStore {
   store_id: string;
@@ -92,10 +114,13 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
     "content-type": "application/json",
     ...((init?.headers as Record<string, string>) ?? {}),
   };
+  // On the server, forward the user's incoming cookies so the backend's
+  // session check works. On the client, the browser handles this via the
+  // same-origin cookie jar (thanks to the rewrite).
   const serverCookies = await getServerCookieHeader();
   if (serverCookies) headers["cookie"] = serverCookies;
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${getApiBase()}${path}`, {
     ...init,
     headers,
     credentials: "include",
@@ -120,7 +145,9 @@ export const api = {
       `/api/stores/${encodeURIComponent(storeId)}/sync`,
       { method: "POST" }
     ),
-  installUrl: () => `${API_URL}/install`,
+  // Hits the backend directly. The OAuth state cookie has to be set on the
+  // backend's domain because that's where Salla redirects back to.
+  installUrl: () => `${BACKEND_URL}/install`,
 
   // Customer auth — every call gets the deployment's hardcoded STORE_ID injected.
   me: () => http<{ customer: Customer | null }>("/api/auth/me"),

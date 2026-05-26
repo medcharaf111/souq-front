@@ -153,4 +153,42 @@ export const api = {
       method: "DELETE",
     }),
   emptyCart: () => http<{ cart: Cart }>("/api/cart", { method: "DELETE" }),
+
+  // Checkout — POSTs cart contents to Salla, returns a hosted-payment URL
+  // the customer must be redirected to.
+  checkout: (body: {
+    shipping?: {
+      country?: string;
+      city?: string;
+      street?: string;
+      block?: string;
+      postal_code?: string;
+    };
+    courier_id?: number;
+  }) =>
+    http<{
+      order_id: string;
+      checkout_url: string | null;
+      customer_order_url: string | null;
+      is_pending_payment: boolean;
+      total?: { amount: number; currency: string };
+    }>("/api/checkout", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  // Loyalty
+  getLoyaltyPoints: () =>
+    http<{
+      balance: number;
+      used_total: number;
+      entries: Array<{
+        name: string;
+        points: number;
+        used_points: number;
+        status: string;
+        order_id: string | null;
+        expiry_date: string | null;
+      }>;
+    }>("/api/loyalty/points"),
 };

@@ -36,7 +36,9 @@ export default async function Header() {
         </a>
         {customerName ? (
           <>
-            <span style={{ color: "#666", fontSize: 13 }}>{customerName}</span>
+            <a href="/account" style={{ textDecoration: "none", color: "#666", fontSize: 13 }}>
+              {customerName}
+            </a>
             <a href="/logout" style={{ textDecoration: "none", color: "inherit" }}>
               Sign out
             </a>

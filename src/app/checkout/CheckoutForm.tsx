@@ -23,7 +23,30 @@ export default function CheckoutForm({
   const [lat, setLat] = useState<string>("");
   const [lng, setLng] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]> | null>(null);
   const [busy, setBusy] = useState(false);
+
+  function parseError(message: string): { summary: string; fields: Record<string, string[]> | null } {
+    // Backend sends 400 with { error, message, fields? } as JSON; the http()
+    // wrapper formats failures as "<status> <body>". Try to extract the body.
+    const m = message.match(/^\d+\s+(.+)$/s);
+    if (m) {
+      try {
+        const parsed = JSON.parse(m[1]) as {
+          message?: string;
+          fields?: Record<string, string[]>;
+          error?: string;
+        };
+        return {
+          summary: parsed.message ?? parsed.error ?? message,
+          fields: parsed.fields ?? null,
+        };
+      } catch {
+        /* fall through */
+      }
+    }
+    return { summary: message, fields: null };
+  }
 
   function useMyLocation() {
     if (!navigator.geolocation) {
@@ -44,6 +67,7 @@ export default function CheckoutForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors(null);
     // Client-side validation: Salla requires first + last name and a phone.
     const trimmedName = name.trim();
     if (!trimmedName.includes(" ")) {
@@ -83,7 +107,10 @@ export default function CheckoutForm({
       }
       setError("Order placed but no checkout URL returned. Check /account.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      const { summary, fields } = parseError(message);
+      setError(summary);
+      setFieldErrors(fields);
     } finally {
       setBusy(false);
     }
@@ -188,7 +215,27 @@ export default function CheckoutForm({
           </label>
         </div>
 
-        {error && <p style={{ color: "#c00", fontSize: 13, margin: 0 }}>{error}</p>}
+        {error && (
+          <div
+            style={{
+              border: "1px solid #fcc",
+              background: "#fff5f5",
+              borderRadius: 4,
+              padding: 12,
+            }}
+          >
+            <p style={{ color: "#c00", fontSize: 13, margin: 0, fontWeight: 600 }}>{error}</p>
+            {fieldErrors && (
+              <ul style={{ margin: "8px 0 0 16px", padding: 0, fontSize: 13, color: "#900" }}>
+                {Object.entries(fieldErrors).map(([fieldName, msgs]) => (
+                  <li key={fieldName}>
+                    <strong>{fieldName}:</strong> {msgs.join("; ")}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         <button
           type="submit"

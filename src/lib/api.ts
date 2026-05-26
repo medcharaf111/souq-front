@@ -13,8 +13,17 @@
  */
 function getApiBase(): string {
   if (typeof window !== "undefined") return "";
+
+  // Prefer the production alias (e.g. "souq-front.vercel.app") so we don't
+  // hit Vercel's "Deployment Protection" wall that blocks the unique
+  // per-deploy URLs (souq-front-<sha>-...vercel.app).
+  const prodUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (prodUrl) return `https://${prodUrl}`;
+
+  // Fallback: per-deploy URL. Works only if deployment protection is OFF.
   const vercelUrl = process.env.VERCEL_URL;
   if (vercelUrl) return `https://${vercelUrl}`;
+
   // Local dev: server components calling http://localhost:3001/api → rewrite → :3000
   return `http://localhost:${process.env.PORT ?? "3001"}`;
 }

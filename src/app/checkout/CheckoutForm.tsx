@@ -14,6 +14,7 @@ export default function CheckoutForm({
 }) {
   const [name, setName] = useState(customerName);
   const [phone, setPhone] = useState(customerPhone);
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("cod");
   const [country, setCountry] = useState("SA");
   const [city, setCity] = useState("");
   const [block, setBlock] = useState("");
@@ -83,6 +84,7 @@ export default function CheckoutForm({
       const r = await api.checkout({
         name: trimmedName,
         phone: phone.trim(),
+        payment_method: paymentMethod,
         shipping: {
           country,
           city,
@@ -221,6 +223,65 @@ export default function CheckoutForm({
             </span>
           </label>
         </div>
+
+        <fieldset style={{ border: "1px solid #eee", borderRadius: 6, padding: 16, margin: 0 }}>
+          <legend style={{ fontSize: 14, fontWeight: 600, padding: "0 6px" }}>Payment method</legend>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              padding: 8,
+              borderRadius: 4,
+              cursor: "pointer",
+              background: paymentMethod === "cod" ? "#f5f8ff" : "transparent",
+            }}
+          >
+            <input
+              type="radio"
+              name="payment_method"
+              value="cod"
+              checked={paymentMethod === "cod"}
+              onChange={() => setPaymentMethod("cod")}
+              style={{ marginTop: 3 }}
+            />
+            <span>
+              <strong style={{ fontSize: 14 }}>Cash on delivery</strong>
+              <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
+                Pay the courier in cash when your order arrives. No card needed now.
+              </div>
+            </span>
+          </label>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              padding: 8,
+              borderRadius: 4,
+              cursor: "pointer",
+              background: paymentMethod === "online" ? "#f5f8ff" : "transparent",
+            }}
+          >
+            <input
+              type="radio"
+              name="payment_method"
+              value="online"
+              checked={paymentMethod === "online"}
+              onChange={() => setPaymentMethod("online")}
+              style={{ marginTop: 3 }}
+            />
+            <span>
+              <strong style={{ fontSize: 14 }}>Pay online (Credit card, Mada, Apple Pay, STC Pay)</strong>
+              <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
+                You&apos;ll be redirected to Salla&apos;s secure payment page. Whatever methods
+                this merchant has enabled will be available there.
+              </div>
+            </span>
+          </label>
+        </fieldset>
 
         {error && (
           <div

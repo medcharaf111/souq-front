@@ -195,6 +195,7 @@ export const api = {
   checkout: (body: {
     name?: string;
     phone?: string;
+    payment_method?: "cod" | "online";
     shipping?: {
       country?: string;
       city?: string;

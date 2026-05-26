@@ -1,89 +1,189 @@
-import { api } from "@/lib/api";
-import SyncButton from "./SyncButton";
+import { api, STORE_ID } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  let stores: Awaited<ReturnType<typeof api.listStores>>["stores"] = [];
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  if (!STORE_ID) {
+    return (
+      <main style={{ maxWidth: 720, margin: "0 auto" }}>
+        <h1>Configuration missing</h1>
+        <p>
+          This deployment doesn&apos;t have a <code>NEXT_PUBLIC_STORE_ID</code> set.
+          Each frontend deployment must be branded for one specific merchant.
+        </p>
+        <p>
+          Set <code>NEXT_PUBLIC_STORE_ID</code> in this project&apos;s environment
+          variables to the merchant&apos;s store_id (visible at <a href="/admin">/admin</a>),
+          then redeploy.
+        </p>
+      </main>
+    );
+  }
+
+  const sp = await searchParams;
+  const page = Number(typeof sp.page === "string" ? sp.page : "1") || 1;
+  const search = typeof sp.search === "string" ? sp.search : undefined;
+
+  let data: Awaited<ReturnType<typeof api.listProducts>> | null = null;
   let apiError: string | null = null;
   try {
-    const r = await api.listStores();
-    stores = r.stores;
+    data = await api.listProducts(STORE_ID, {
+      page,
+      per_page: 24,
+      status: "sale",
+      ...(search ? { search } : {}),
+    });
   } catch (e) {
     apiError = e instanceof Error ? e.message : String(e);
   }
 
   return (
-    <main style={{ maxWidth: 760, margin: "0 auto" }}>
-      <h1>Souq — admin</h1>
-      <p>
-        <a
-          href={api.installUrl()}
+    <main style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+        }}
+      >
+        <h1 style={{ margin: 0 }}>Shop</h1>
+        <nav style={{ fontSize: 14, display: "flex", gap: 16 }}>
+          <a href="/login">Sign in</a>
+          <a href="/signup">Create account</a>
+        </nav>
+      </header>
+
+      <form
+        method="get"
+        style={{ marginBottom: 24, display: "flex", gap: 8 }}
+      >
+        <input
+          type="text"
+          name="search"
+          defaultValue={search ?? ""}
+          placeholder="Search products"
+          style={{ flex: 1, padding: 10, fontSize: 14 }}
+        />
+        <button
+          type="submit"
           style={{
-            display: "inline-block",
             padding: "10px 16px",
             background: "#111",
             color: "white",
-            borderRadius: 6,
-            textDecoration: "none",
+            border: 0,
+            borderRadius: 4,
+            cursor: "pointer",
           }}
         >
-          Install on a Salla store
-        </a>
-      </p>
+          Search
+        </button>
+      </form>
 
       {apiError && (
         <p style={{ color: "#c00" }}>
-          Could not reach the backend: <code>{apiError}</code>
+          Could not load products: <code>{apiError}</code>
         </p>
       )}
 
-      <h2>Installed stores</h2>
-      {stores.length === 0 && !apiError ? (
-        <p style={{ color: "#666" }}>Nothing installed yet.</p>
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "1px solid #ddd" }}>
-              <th style={{ padding: "8px 4px" }}>Store</th>
-              <th style={{ padding: "8px 4px" }}>Products</th>
-              <th style={{ padding: "8px 4px" }}>Last synced</th>
-              <th style={{ padding: "8px 4px" }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {stores.map((s) => (
-              <tr key={s.store_id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                <td style={{ padding: "10px 4px" }}>
-                  <div>
-                    {s.store_name ?? <code>{s.store_id}</code>}
+      {data && data.products.length === 0 ? (
+        <p style={{ color: "#666" }}>No products yet.</p>
+      ) : data ? (
+        <>
+          <p style={{ color: "#666", fontSize: 13 }}>
+            {data.total} products · page {data.page}
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+              gap: 16,
+            }}
+          >
+            {data.products.map((p) => (
+              <a
+                key={p.id}
+                href={p.url ?? "#"}
+                target={p.url ? "_blank" : undefined}
+                rel="noreferrer"
+                style={{
+                  textDecoration: "none",
+                  color: "inherit",
+                  border: "1px solid #eee",
+                  borderRadius: 6,
+                  overflow: "hidden",
+                  display: "block",
+                }}
+              >
+                <div
+                  style={{
+                    aspectRatio: "1",
+                    background: "#fafafa",
+                    backgroundImage: p.image ? `url(${p.image})` : undefined,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
+                <div style={{ padding: 10 }}>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      lineHeight: 1.3,
+                      minHeight: 36,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {p.name}
                   </div>
-                  <div style={{ fontSize: 12, color: "#888" }}>
-                    token exp {s.expires_at.slice(0, 16).replace("T", " ")}
+                  <div style={{ marginTop: 6, fontSize: 14, fontWeight: 600 }}>
+                    {p.sale_price !== null && p.sale_price !== undefined ? (
+                      <>
+                        <span style={{ color: "#c00" }}>
+                          {p.sale_price} {p.price.currency}
+                        </span>{" "}
+                        <span
+                          style={{
+                            color: "#888",
+                            textDecoration: "line-through",
+                            fontWeight: 400,
+                            fontSize: 12,
+                          }}
+                        >
+                          {p.price.amount} {p.price.currency}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        {p.price.amount} {p.price.currency}
+                      </>
+                    )}
                   </div>
-                </td>
-                <td style={{ padding: "10px 4px" }}>
-                  <a href={`/store/${encodeURIComponent(s.store_id)}`}>
-                    {s.product_count}
-                  </a>
-                </td>
-                <td style={{ padding: "10px 4px", fontSize: 13, color: "#666" }}>
-                  {s.last_synced_at
-                    ? s.last_synced_at.slice(0, 16).replace("T", " ")
-                    : "never"}
-                </td>
-                <td style={{ padding: "10px 4px" }}>
-                  <SyncButton storeId={s.store_id} />
-                </td>
-              </tr>
+                </div>
+              </a>
             ))}
-          </tbody>
-        </table>
-      )}
+          </div>
 
-      <p style={{ marginTop: 32, fontSize: 12, color: "#888" }}>
-        Customer storefront lives at <code>/store/[storeId]</code>.
-      </p>
+          <div style={{ marginTop: 24, display: "flex", gap: 8 }}>
+            {page > 1 && (
+              <a href={`?page=${page - 1}${search ? `&search=${search}` : ""}`}>
+                ← prev
+              </a>
+            )}
+            {data.has_more && (
+              <a href={`?page=${page + 1}${search ? `&search=${search}` : ""}`}>
+                next →
+              </a>
+            )}
+          </div>
+        </>
+      ) : null}
     </main>
   );
 }

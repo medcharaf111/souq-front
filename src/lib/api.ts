@@ -35,10 +35,23 @@ export interface ProductsResponse {
   products: ApiProduct[];
 }
 
+export interface Customer {
+  id: string;
+  store_id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+}
+
+/** The merchant this deployment is branded for. Set NEXT_PUBLIC_STORE_ID in
+ *  the env file per Vercel deployment. */
+export const STORE_ID = process.env.NEXT_PUBLIC_STORE_ID ?? "";
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    credentials: "include",
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
@@ -61,4 +74,18 @@ export const api = {
       { method: "POST" }
     ),
   installUrl: () => `${API_URL}/install`,
+
+  // Customer auth — every call gets the deployment's hardcoded STORE_ID injected.
+  me: () => http<{ customer: Customer | null }>("/api/auth/me"),
+  signup: (data: { email: string; password: string; name?: string; phone?: string }) =>
+    http<{ customer: Customer }>("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ ...data, storeId: STORE_ID }),
+    }),
+  login: (data: { email: string; password: string }) =>
+    http<{ customer: Customer }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ ...data, storeId: STORE_ID }),
+    }),
+  logout: () => http<{ ok: true }>("/api/auth/logout", { method: "POST" }),
 };

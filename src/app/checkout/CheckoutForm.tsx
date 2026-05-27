@@ -102,9 +102,17 @@ export default function CheckoutForm({
             : {}),
         },
       });
-      // Payment pending (credit card, mada, etc.) → bounce to Salla's hosted
-      // payment page. Anything else → show our own confirmation page so we
-      // don't dump the customer onto the merchant's empty cart.
+      // Customer picked "Pay online" → send them to Salla's checkout URL
+      // regardless of is_pending_payment. Salla's payment_pending orders return
+      // is_pending_payment:false but the URL IS the place where the customer
+      // picks a method and pays. Only fall back to /order/confirmed if Salla
+      // didn't return a URL at all.
+      if (paymentMethod === "online" && r.checkout_url) {
+        window.location.href = r.checkout_url;
+        return;
+      }
+      // True pending-payment with a URL also gets the redirect (covers any
+      // future "saved card" or "express checkout" path we might add).
       if (r.is_pending_payment && r.checkout_url) {
         window.location.href = r.checkout_url;
         return;

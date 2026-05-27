@@ -103,8 +103,8 @@ export default function CheckoutForm({
         },
       });
       // Payment pending (credit card, mada, etc.) → bounce to Salla's hosted
-      // payment page. COD / already-paid → show our own confirmation page so
-      // we don't dump the customer onto the merchant's empty cart.
+      // payment page. Anything else → show our own confirmation page so we
+      // don't dump the customer onto the merchant's empty cart.
       if (r.is_pending_payment && r.checkout_url) {
         window.location.href = r.checkout_url;
         return;
@@ -113,6 +113,7 @@ export default function CheckoutForm({
         order_id: r.order_id,
         ...(r.customer_order_url ? { salla_url: r.customer_order_url } : {}),
         ...(r.is_pending_payment ? { pending_payment: "1" } : {}),
+        ...(r.payment_method ? { method: r.payment_method } : {}),
       });
       window.location.href = `/order/confirmed?${params.toString()}`;
     } catch (err) {

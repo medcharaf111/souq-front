@@ -251,6 +251,9 @@ export const api = {
       checkout_url: string | null;
       customer_order_url: string | null;
       is_pending_payment: boolean;
+      payment_method: string | null;
+      status_slug: string | null;
+      requested_methods: string[];
       total?: { amount: number; currency: string };
     }>("/api/checkout", {
       method: "POST",

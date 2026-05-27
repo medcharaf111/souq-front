@@ -11,6 +11,36 @@ export default async function OrderConfirmedPage({
   const orderId = typeof sp.order_id === "string" ? sp.order_id : null;
   const sallaUrl = typeof sp.salla_url === "string" ? sp.salla_url : null;
   const pendingPayment = sp.pending_payment === "1";
+  const method = typeof sp.method === "string" ? sp.method : null;
+
+  // Method-specific copy. If we don't recognize it, fall back to generic.
+  const methodCopy: Record<string, { title: string; body: string }> = {
+    cod: {
+      title: "Cash on delivery",
+      body: "The merchant will contact you to confirm the shipping address and delivery time. Pay the courier when your order arrives.",
+    },
+    bank: {
+      title: "Bank transfer",
+      body: "The merchant will contact you with bank transfer instructions. Your order will be processed once payment is confirmed.",
+    },
+    credit_card: {
+      title: "Credit card payment",
+      body: "Your payment was processed. The merchant will fulfill your order shortly.",
+    },
+    mada: {
+      title: "Mada payment",
+      body: "Your payment was processed. The merchant will fulfill your order shortly.",
+    },
+    apple_pay: {
+      title: "Apple Pay",
+      body: "Your payment was processed. The merchant will fulfill your order shortly.",
+    },
+    stc_pay: {
+      title: "STC Pay",
+      body: "Your payment was processed. The merchant will fulfill your order shortly.",
+    },
+  };
+  const detail = method ? methodCopy[method] : null;
 
   return (
     <main style={{ maxWidth: 640, margin: "0 auto" }}>
@@ -38,11 +68,17 @@ export default async function OrderConfirmedPage({
           <p style={{ marginTop: 16, fontSize: 14 }}>
             Payment is still required. We&apos;re sending you to the secure payment page now.
           </p>
+        ) : detail ? (
+          <div style={{ marginTop: 16 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#333", margin: 0 }}>
+              {detail.title}
+            </p>
+            <p style={{ fontSize: 14, color: "#333", marginTop: 6 }}>{detail.body}</p>
+          </div>
         ) : (
           <p style={{ marginTop: 16, fontSize: 14, color: "#333" }}>
-            Cash on delivery. The merchant will contact you to confirm the
-            shipping address and delivery time. No further action required from you
-            right now.
+            Your order is being processed. The merchant will contact you with the
+            next steps for payment and delivery.
           </p>
         )}
 

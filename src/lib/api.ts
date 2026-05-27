@@ -88,6 +88,32 @@ export interface CartItem {
   qty: number;
   stock: number | null;
   status: string;
+  selected_options: Array<{ id: number; value: Array<string | number> }> | null;
+}
+
+export interface ProductOption {
+  id: number;
+  name: string;
+  type: string;
+  required: boolean;
+  purpose: string | null;
+  values: Array<{ id: number; name: string; is_out_of_stock: boolean }>;
+}
+
+export interface ProductDetail {
+  id: string;
+  salla_id: string;
+  name: string;
+  sku: string | null;
+  description: string | null;
+  price: { amount: number; currency: string };
+  sale_price: number | null;
+  quantity: number | null;
+  status: string;
+  type: string | null;
+  url: string | null;
+  image: string | null;
+  options: ProductOption[];
 }
 
 export interface Cart {
@@ -154,6 +180,11 @@ export const api = {
       `/api/stores/${encodeURIComponent(storeId)}/sync`,
       { method: "POST" }
     ),
+
+  getProduct: (storeId: string, productId: string) =>
+    http<{ product: ProductDetail }>(
+      `/api/stores/${encodeURIComponent(storeId)}/products/${encodeURIComponent(productId)}`
+    ),
   // Hits the backend directly. The OAuth state cookie has to be set on the
   // backend's domain because that's where Salla redirects back to.
   installUrl: () => `${BACKEND_URL}/install`,
@@ -174,10 +205,18 @@ export const api = {
 
   // Cart
   getCart: () => http<{ cart: Cart }>("/api/cart"),
-  addToCart: (productId: string, qty = 1) =>
+  addToCart: (
+    productId: string,
+    qty = 1,
+    options?: Array<{ id: number; value: Array<string | number> }>
+  ) =>
     http<{ cart: Cart }>("/api/cart/items", {
       method: "POST",
-      body: JSON.stringify({ product_id: productId, qty }),
+      body: JSON.stringify({
+        product_id: productId,
+        qty,
+        ...(options && options.length > 0 ? { options } : {}),
+      }),
     }),
   updateCartItem: (itemId: string, qty: number) =>
     http<{ cart: Cart }>(`/api/cart/items/${encodeURIComponent(itemId)}`, {

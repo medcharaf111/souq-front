@@ -1,6 +1,5 @@
 import { api, STORE_ID } from "@/lib/api";
 import Header from "./Header";
-import AddToCartButton from "./AddToCartButton";
 
 export const dynamic = "force-dynamic";
 
@@ -94,14 +93,17 @@ export default async function Home({
             }}
           >
             {data.products.map((p) => (
-              <div
+              <a
                 key={p.id}
+                href={`/product/${encodeURIComponent(p.id)}`}
                 style={{
                   border: "1px solid #eee",
                   borderRadius: 6,
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
+                  textDecoration: "none",
+                  color: "inherit",
                 }}
               >
                 <div
@@ -150,11 +152,8 @@ export default async function Home({
                       </>
                     )}
                   </div>
-                  <div style={{ marginTop: "auto" }}>
-                    <AddToCartButton productId={p.id} />
-                  </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
 

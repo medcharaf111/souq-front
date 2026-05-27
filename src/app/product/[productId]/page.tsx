@@ -21,10 +21,27 @@ export default async function ProductDetailPage({
   }
 
   let product: Awaited<ReturnType<typeof api.getProduct>>["product"] | null = null;
+  let fetchError: string | null = null;
   try {
     product = (await api.getProduct(STORE_ID, productId)).product;
-  } catch {
+  } catch (e) {
+    fetchError = e instanceof Error ? e.message : String(e);
+  }
+  if (fetchError && fetchError.startsWith("404")) {
     notFound();
+  }
+  if (fetchError) {
+    return (
+      <main style={{ maxWidth: 720, margin: "0 auto" }}>
+        <Header />
+        <p style={{ color: "#c00" }}>
+          Could not load product: <code>{fetchError}</code>
+        </p>
+        <p style={{ fontSize: 13 }}>
+          <a href="/">← back to shop</a>
+        </p>
+      </main>
+    );
   }
   if (!product) notFound();
 

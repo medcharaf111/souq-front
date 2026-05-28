@@ -56,6 +56,11 @@ export default async function AccountPage() {
                   Used so far: {loyalty.used_total.toLocaleString()} points
                 </p>
               )}
+              {loyalty.locally_redeemed > 0 && (
+                <p style={{ fontSize: 12, color: "#888" }}>
+                  Redeemed in-app: {loyalty.locally_redeemed.toLocaleString()} points
+                </p>
+              )}
               {loyalty.entries.length > 0 && (
                 <details style={{ marginTop: 16 }}>
                   <summary style={{ cursor: "pointer", fontSize: 13 }}>Points history</summary>

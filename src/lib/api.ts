@@ -267,7 +267,9 @@ export const api = {
   // Loyalty
   getLoyaltyPoints: () =>
     http<{
-      balance: number;
+      balance: number; // net available = Salla balance − points redeemed in-app
+      salla_balance: number;
+      locally_redeemed: number;
       used_total: number;
       entries: Array<{
         name: string;

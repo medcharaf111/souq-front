@@ -235,6 +235,7 @@ export const api = {
     name?: string;
     phone?: string;
     payment_method?: "cod" | "online";
+    redeem_points?: number;
     shipping?: {
       country?: string;
       city?: string;
@@ -255,6 +256,9 @@ export const api = {
       status_slug: string | null;
       requested_methods: string[];
       total?: { amount: number; currency: string };
+      redeemed_points: number;
+      redeemed_amount: number;
+      redeem_coupon: string | null;
     }>("/api/checkout", {
       method: "POST",
       body: JSON.stringify(body),

@@ -3,18 +3,27 @@
 import { useState } from "react";
 import { api, type Cart } from "@/lib/api";
 
+// Hardcoded conversion rate for the UI preview. The backend reads the real
+// rate from Salla's loyalty program config; this is just for showing the user
+// a rough discount estimate before they click "Place order". If your merchant
+// has configured a different rate, update this constant.
+const POINTS_PER_CURRENCY_UNIT = 10;
+
 export default function CheckoutForm({
   cart,
   customerName,
   customerPhone,
+  loyaltyBalance,
 }: {
   cart: Cart;
   customerName: string;
   customerPhone: string;
+  loyaltyBalance: number;
 }) {
   const [name, setName] = useState(customerName);
   const [phone, setPhone] = useState(customerPhone);
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("cod");
+  const [redeemPoints, setRedeemPoints] = useState(0);
   const [country, setCountry] = useState("SA");
   const [city, setCity] = useState("");
   const [block, setBlock] = useState("");
@@ -85,6 +94,7 @@ export default function CheckoutForm({
         name: trimmedName,
         phone: phone.trim(),
         payment_method: paymentMethod,
+        ...(redeemPoints > 0 ? { redeem_points: redeemPoints } : {}),
         shipping: {
           country,
           city,
@@ -232,6 +242,54 @@ export default function CheckoutForm({
             </span>
           </label>
         </div>
+
+        {loyaltyBalance > 0 && (
+          <fieldset
+            style={{
+              border: "1px solid #eee",
+              borderRadius: 6,
+              padding: 16,
+              margin: 0,
+              background: "#fafffb",
+            }}
+          >
+            <legend style={{ fontSize: 14, fontWeight: 600, padding: "0 6px" }}>
+              Loyalty points
+            </legend>
+            <p style={{ margin: "4px 0 12px", fontSize: 13, color: "#444" }}>
+              You have <strong>{loyaltyBalance.toLocaleString()}</strong> points
+              available. Redeem at a rate of {POINTS_PER_CURRENCY_UNIT} points = 1{" "}
+              {cart.currency} off your order.
+            </p>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
+              Use
+              <input
+                type="number"
+                min={0}
+                max={loyaltyBalance}
+                step={POINTS_PER_CURRENCY_UNIT}
+                value={redeemPoints}
+                onChange={(e) =>
+                  setRedeemPoints(
+                    Math.max(0, Math.min(loyaltyBalance, Math.floor(Number(e.target.value) || 0)))
+                  )
+                }
+                style={{ width: 100, padding: 6 }}
+              />
+              points
+              {redeemPoints > 0 && (
+                <span style={{ color: "#0a7", fontWeight: 600 }}>
+                  → {Math.floor(redeemPoints / POINTS_PER_CURRENCY_UNIT)} {cart.currency} off
+                </span>
+              )}
+            </label>
+            {redeemPoints > 0 && (
+              <p style={{ fontSize: 11, color: "#666", margin: "8px 0 0" }}>
+                Points are deducted only after your order is successfully placed.
+              </p>
+            )}
+          </fieldset>
+        )}
 
         <fieldset style={{ border: "1px solid #eee", borderRadius: 6, padding: 16, margin: 0 }}>
           <legend style={{ fontSize: 14, fontWeight: 600, padding: "0 6px" }}>Payment method</legend>

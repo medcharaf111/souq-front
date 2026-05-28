@@ -18,6 +18,14 @@ export default async function CheckoutPage() {
     redirect("/cart");
   }
 
+  // Best-effort: load loyalty balance so we can offer redemption. Failure is
+  // non-fatal — checkout still works without showing the loyalty section.
+  let loyaltyBalance = 0;
+  try {
+    const r = await api.getLoyaltyPoints();
+    loyaltyBalance = r.balance;
+  } catch {}
+
   return (
     <main style={{ maxWidth: 720, margin: "0 auto" }}>
       <Header />
@@ -29,6 +37,7 @@ export default async function CheckoutPage() {
         cart={cart}
         customerName={me.customer.name ?? ""}
         customerPhone={me.customer.phone ?? ""}
+        loyaltyBalance={loyaltyBalance}
       />
     </main>
   );

@@ -106,10 +106,33 @@ export default async function ProductDetailPage({
           </div>
 
           {product.description && (
-            <div
-              style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 20, color: "#444" }}
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
+            <>
+              <style>{`
+                .product-description img,
+                .product-description video,
+                .product-description iframe {
+                  max-width: 100%;
+                  height: auto;
+                  display: block;
+                  margin: 8px 0;
+                  border-radius: 4px;
+                }
+                .product-description table { max-width: 100%; }
+                .product-description * { max-width: 100% !important; box-sizing: border-box; }
+              `}</style>
+              <div
+                className="product-description"
+                style={{
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  marginBottom: 20,
+                  color: "#444",
+                  overflowWrap: "break-word",
+                  wordBreak: "break-word",
+                }}
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            </>
           )}
 
           <ProductOptionsForm

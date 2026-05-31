@@ -72,6 +72,7 @@ export interface Customer {
   email: string;
   name: string | null;
   phone: string | null;
+  salla_customer_id?: string | null;
 }
 
 export interface CartItem {
@@ -190,14 +191,22 @@ export const api = {
   installUrl: () => `${BACKEND_URL}/install`,
 
   // Customer auth — every call gets the deployment's hardcoded STORE_ID injected.
+  // Auth is email-OTP via Salla's Store API (no passwords).
   me: () => http<{ customer: Customer | null }>("/api/auth/me"),
-  signup: (data: { email: string; password: string; name?: string; phone?: string }) =>
-    http<{ customer: Customer }>("/api/auth/signup", {
+  otpStart: (email: string) =>
+    http<{ ok: true; sent_to: string }>("/api/auth/otp/start", {
       method: "POST",
-      body: JSON.stringify({ ...data, storeId: STORE_ID }),
+      body: JSON.stringify({ email, storeId: STORE_ID }),
     }),
-  login: (data: { email: string; password: string }) =>
-    http<{ customer: Customer }>("/api/auth/login", {
+  otpVerify: (data: {
+    email: string;
+    code: string;
+    first_name?: string;
+    last_name?: string;
+    phone?: string;
+    country_code?: string;
+  }) =>
+    http<{ customer: Customer }>("/api/auth/otp/verify", {
       method: "POST",
       body: JSON.stringify({ ...data, storeId: STORE_ID }),
     }),

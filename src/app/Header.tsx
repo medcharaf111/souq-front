@@ -44,10 +44,7 @@ export default async function Header() {
             </a>
           </>
         ) : (
-          <>
-            <a href="/login" style={{ textDecoration: "none", color: "inherit" }}>Sign in</a>
-            <a href="/signup" style={{ textDecoration: "none", color: "inherit" }}>Create account</a>
-          </>
+          <a href="/login" style={{ textDecoration: "none", color: "inherit" }}>Sign in</a>
         )}
       </nav>
     </header>

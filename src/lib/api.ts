@@ -257,17 +257,22 @@ export const api = {
     courier_id?: number;
   }) =>
     http<{
-      order_id: string;
+      // Headless (Path A) responses skip the order_id and just hand back a URL
+      // for the customer to complete checkout on the merchant's native site.
+      headless?: boolean;
+      message?: string;
+      // Installed-mode order fields (optional under headless):
+      order_id?: string;
       checkout_url: string | null;
-      customer_order_url: string | null;
-      is_pending_payment: boolean;
-      payment_method: string | null;
-      status_slug: string | null;
-      requested_methods: string[];
+      customer_order_url?: string | null;
+      is_pending_payment?: boolean;
+      payment_method?: string | null;
+      status_slug?: string | null;
+      requested_methods?: string[];
       total?: { amount: number; currency: string };
-      redeemed_points: number;
-      redeemed_amount: number;
-      redeem_coupon: string | null;
+      redeemed_points?: number;
+      redeemed_amount?: number;
+      redeem_coupon?: string | null;
     }>("/api/checkout", {
       method: "POST",
       body: JSON.stringify(body),

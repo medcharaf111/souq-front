@@ -112,6 +112,14 @@ export default function CheckoutForm({
             : {}),
         },
       });
+      // Headless stores (Path A: no installed partner app) send the customer
+      // straight to the merchant's native /cart page, where Salla's published
+      // checkout completes the order. Our backend already mirrored the cart
+      // to the customer's Salla account, so the page picks it up server-side.
+      if (r.headless && r.checkout_url) {
+        window.location.href = r.checkout_url;
+        return;
+      }
       // Customer picked "Pay online" → send them to Salla's checkout URL
       // regardless of is_pending_payment. Salla's payment_pending orders return
       // is_pending_payment:false but the URL IS the place where the customer
@@ -128,7 +136,7 @@ export default function CheckoutForm({
         return;
       }
       const params = new URLSearchParams({
-        order_id: r.order_id,
+        order_id: r.order_id ?? "",
         ...(r.customer_order_url ? { salla_url: r.customer_order_url } : {}),
         ...(r.is_pending_payment ? { pending_payment: "1" } : {}),
         ...(r.payment_method ? { method: r.payment_method } : {}),

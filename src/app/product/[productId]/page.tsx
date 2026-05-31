@@ -108,17 +108,10 @@ export default async function ProductDetailPage({
           {product.description && (
             <>
               <style>{`
-                .product-description img,
-                .product-description video,
-                .product-description iframe {
-                  max-width: 100%;
-                  height: auto;
-                  display: block;
-                  margin: 8px 0;
-                  border-radius: 4px;
-                }
-                .product-description table { max-width: 100%; }
-                .product-description * { max-width: 100% !important; box-sizing: border-box; }
+                main img, main video, main iframe { max-width: 100% !important; height: auto !important; width: auto !important; max-height: 360px !important; object-fit: contain !important; display: block !important; box-sizing: border-box !important; }
+                .product-description, .product-description * { max-width: 100% !important; box-sizing: border-box !important; }
+                .product-description img { margin: 8px 0; border-radius: 4px; }
+                .product-description table { display: block; overflow-x: auto; }
               `}</style>
               <div
                 className="product-description"
@@ -127,10 +120,16 @@ export default async function ProductDetailPage({
                   lineHeight: 1.6,
                   marginBottom: 20,
                   color: "#444",
+                  overflow: "hidden",
                   overflowWrap: "break-word",
                   wordBreak: "break-word",
                 }}
-                dangerouslySetInnerHTML={{ __html: product.description }}
+                dangerouslySetInnerHTML={{
+                  // Pre-strip width/height attributes so they can't fight our CSS.
+                  __html: product.description
+                    .replace(/\s+(width|height)\s*=\s*["'][^"']*["']/gi, "")
+                    .replace(/style\s*=\s*["'][^"']*\b(width|min-width|height|min-height)\s*:[^;"']*[;"'][^"']*["']/gi, ""),
+                }}
               />
             </>
           )}

@@ -57,13 +57,20 @@ export default async function ProductDetailPage({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          // minmax(0, 1fr) instead of 1fr so columns don't blow out the
+          // container when content has any min-width (default 1fr = minmax(auto,1fr)
+          // lets the columns expand past the parent — that's how the product
+          // image div was rendering 1541px on a 1000px-wide main).
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
           gap: 32,
           marginTop: 16,
         }}
       >
         <div
           style={{
+            // Hard cap as a belt-and-braces for any browser that still
+            // mis-sizes aspect-ratio in a grid column.
+            maxWidth: "100%",
             aspectRatio: "1",
             background: "#fafafa",
             backgroundImage: product.image ? `url(${product.image})` : undefined,
